@@ -302,7 +302,8 @@ sprite.getopts = function() {
 		exportAs: elements.optionExport.filter(":checked").val(),
 		vertical: (direction == "vertical"),
 		horizontal: (direction == "horizontal"),
-		diagonal: (direction == "diagonal")
+		diagonal: (direction == "diagonal"),
+		packed: (direction === "packed")
 	}
 };
 
@@ -327,59 +328,80 @@ sprite.mergefiles = function() {
 		isVertical = opts.vertical,
 		isHorizontal = opts.horizontal,
 		isDiagonal = opts.diagonal,
+		isPacked = opts.packed,
 		totalWidth = 0,
 		totalHeight = 0,
 		resultContext = resultCanvas.getContext("2d");
 
 	// Generate final canvas size and locations
-	sprite.eachcanvas(function(canvas, i, islast) {
 
-		var spacing = islast ? 0 : opts.spacing;
-		canvas.storeX = canvas.storeY = 0;
+	if (isPacked) {
+		var canvases = sprite.getcanvases().map(function(idx, c) {
+			return {
+				w : c.width,
+				h : c.height,
+				canvas : c
+			};
+		});
 
-		if (isDiagonal) {
+		var packer = new GrowingPacker();
+		packer.fit(canvases);
+		totalWidth = resultCanvas.width = packer.root.w;
+		totalHeight = resultCanvas.height = packer.root.h;
+		canvases.each(function(idx, c) {
+			resultContext.drawImage(c.canvas, c.fit.x, c.fit.y);
+		})
+	}
+	else {
+		sprite.eachcanvas(function(canvas, i, islast) {
 
-			canvas.storeX = totalWidth;
-			canvas.storeY = totalHeight;
+			var spacing = islast ? 0 : opts.spacing;
+			canvas.storeX = canvas.storeY = 0;
 
-			totalWidth += canvas.width + spacing;
-			totalHeight += canvas.height + spacing;
+			if (isDiagonal) {
 
-		}
-		else if (isVertical) {
+				canvas.storeX = totalWidth;
+				canvas.storeY = totalHeight;
 
-			canvas.storeY = totalHeight;
+				totalWidth += canvas.width + spacing;
+				totalHeight += canvas.height + spacing;
 
-			totalWidth = Math.max(canvas.width, totalWidth);
-			totalHeight += canvas.height + spacing;
+			}
+			else if (isVertical) {
 
-		}
-		else if (isHorizontal) {
+				canvas.storeY = totalHeight;
 
-			canvas.storeX = totalWidth;
+				totalWidth = Math.max(canvas.width, totalWidth);
+				totalHeight += canvas.height + spacing;
 
-			totalHeight = Math.max(canvas.height, totalHeight);
-			totalWidth += canvas.width + spacing;
+			}
+			else if (isHorizontal) {
 
-		}
-	});
+				canvas.storeX = totalWidth;
 
-	resultCanvas.width = totalWidth
-	resultCanvas.height = totalHeight;
+				totalHeight = Math.max(canvas.height, totalHeight);
+				totalWidth += canvas.width + spacing;
 
-	sprite.eachcanvas(function(canvas) {
-		if (isDiagonal) {
-			// need to set the reset the storeX now since we want it opposite
-			// (starting at top right instead of top left)
-			canvas.storeX = totalWidth - canvas.storeX - canvas.width;
-		}
+			}
+		});
 
-		resultContext.drawImage(canvas, canvas.storeX, canvas.storeY);
+		resultCanvas.width = totalWidth
+		resultCanvas.height = totalHeight;
 
-		// Need to be inverted now for background-position
-		canvas.storeX = -canvas.storeX;
-		canvas.storeY = -canvas.storeY;
-	});
+		sprite.eachcanvas(function(canvas) {
+			if (isDiagonal) {
+				// need to set the reset the storeX now since we want it opposite
+				// (starting at top right instead of top left)
+				canvas.storeX = totalWidth - canvas.storeX - canvas.width;
+			}
+
+			resultContext.drawImage(canvas, canvas.storeX, canvas.storeY);
+
+			// Need to be inverted now for background-position
+			canvas.storeX = -canvas.storeX;
+			canvas.storeY = -canvas.storeY;
+		});
+	}
 
 	if (totalWidth != 0) {
 		resultBase64 = resultCanvas.toDataURL("image/" + opts.exportAs);
