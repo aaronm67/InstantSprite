@@ -1,220 +1,208 @@
 /******************************************************************************
-https://github.com/jakesgordon/bin-packing/blob/master/js/packer.growing.js
+Copyright (c) 2011, 2012, 2013 Jake Gordon and contributors
+Copyright (c) 2013 Aaron Marasco
+Based on https://github.com/jakesgordon/bin-packing/
 
-This is a binary tree based bin packing algorithm that is more complex than
-the simple Packer (packer.js). Instead of starting off with a fixed width and
-height, it starts with the width and height of the first block passed and then
-grows as necessary to accomodate each subsequent block. As it grows it attempts
-to maintain a roughly square ratio by making 'smart' choices about whether to
-grow right or down.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-When growing, the algorithm can only grow to the right OR down. Therefore, if
-the new block is BOTH wider and taller than the current target then it will be
-rejected. This makes it very important to initialize with a sensible starting
-width and height. If you are providing sorted input (largest first) then this
-will not be an issue.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-A potential way to solve this limitation would be to allow growth in BOTH
-directions at once, but this requires maintaining a more complex tree
-with 3 children (down, right and center) and that complexity can be avoided
-by simply chosing a sensible starting block.
-
-Best results occur when the input blocks are sorted by height, or even better
-when sorted by max(width,height).
-
-Inputs:
-------
-
-  blocks: array of any objects that have .w and .h attributes
-
-Outputs:
--------
-
-  marks each block that fits with a .fit attribute pointing to a
-  node with .x and .y coordinates
-
-Example:
--------
-
-  var blocks = [
-    { w: 100, h: 100 },
-    { w: 100, h: 100 },
-    { w:  80, h:  80 },
-    { w:  80, h:  80 },
-    etc
-    etc
-  ];
-
-  var packer = new GrowingPacker();
-  packer.fit(blocks);
-
-  for(var n = 0 ; n < blocks.length ; n++) {
-    var block = blocks[n];
-    if (block.fit) {
-      Draw(block.fit.x, block.fit.y, block.w, block.h);
-    }
-  }
-
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE
 
 ******************************************************************************/
+(function(exports) {
 
-GrowingPacker = function() { };
+
+var Node = function(obj) {
+    this.x = obj.x;
+    this.y = obj.y;
+    this.w = obj.w;
+    this.h = obj.h;
+    this.used = false;
+    this.right = this.down = {
+        findSpace: function() { return null; }
+    };
+};
+
+Node.prototype = {
+    getPosition: function() {
+        return {
+            x: this.x,
+            y: this.y,
+            w: this.w,
+            h: this.h
+        };
+    },
+
+    clone: function() {
+        var ret = new Node({
+            x: this.x,
+            y: this.y,
+            w: this.w,
+            h: this.h
+        });
+
+        ret.right = this.right;
+        ret.down = this.down;
+        ret.used = this.used;
+        return ret;
+    },
+
+    /**
+     * Extend a node to the right, return the new sectioned empty space
+     * 
+     * @param  {Node} downNode Node existing empty space
+     * @param  {Number} width Amount to grow right
+     * @param  {Number} height Height of the block that's being fit
+     * @return {Node} node containing new empty space that will fit the object
+     */
+    growRight: function(downNode, width, height) {
+        this.right = new Node({
+            x: this.w,
+            y: this.y,
+            w: width,
+            h: this.h
+        });
+
+        this.w = this.w + width;
+        this.down = downNode;
+        return this.right;
+    },
+
+    /**
+     * Grow a node down, return the new sectioned empty space
+     * 
+     * @param  {Number} rightNode Node containing exiting empty space
+     * @param  {Number} width Width of the object we're adding
+     * @param  {Number} height Height to grow
+     * @return {Node} node containing new empty space that will fit the object
+     */
+    growDown: function(rightNode, width, height) {
+        this.down = new Node({
+            x: this.x,
+            y: this.h,
+            w: this.w,
+            h: height
+        });
+
+        this.h = this.h + height;
+        this.right = rightNode;
+        return this.down;
+    },
+
+    findSpace: function(width, height) {
+
+        if (this.used) {
+            // used space -- look in tree for space
+            return (this.right.findSpace(width, height)) || (this.down.findSpace(width, height));
+        }
+
+        // this is unused space, and fits
+        if (this.w >= width && this.h >= height) {
+            return this;
+        }
+
+        // empty space, but not big enough to fit the node
+        return null;
+    },
+
+    use: function() {
+        this.used = true;
+        return this;
+    },
+
+    /*
+     * Assuming a node is unused, at least (width) wide and (height) tall, get the free space from this node
+     * and create empty blocks if there is left over space.
+     */
+    split: function(width, height) {
+        // if there's empty space around this node, create new node from the space
+        if (this.h > height) {
+            this.down = new Node({
+                 x: this.x,
+                 // position = just below the used space
+                 y: this.y + height,
+                 w: this.w,
+                 // height = remaining free height
+                 h: this.h - height
+            });
+        }
+
+        if (this.w > width) {
+            this.right = new Node({
+                // position = right of the empty space
+                x: this.x + width,
+                y: this.y,
+                // width = remaining empty width
+                w: this.w - width,
+                h: height
+            });
+        }
+
+        return this;
+    }
+};
+
+var GrowingPacker = function(blocks) {
+    if (blocks) {
+        this.fit(blocks);
+    }
+};
 
 GrowingPacker.prototype = {
+    fit: function(blocks) {
+        this.blocks = blocks.slice(0);
+        var w = this.blocks[0].w;
+        var h = this.blocks[0].h;
+        this.root = new Node({
+            w: w,
+            h: h,
+            x: 0,
+            y: 0
+        });
 
-  fit: function(blocks) {
-    var n, node, block, len = blocks.length;
-    var w = len > 0 ? blocks[0].w : 0;
-    var h = len > 0 ? blocks[0].h : 0;
-    this.root = { x: 0, y: 0, w: w, h: h };
-    for (n = 0; n < len ; n++) {
-      block = blocks[n];
-      if (node = this.findNode(this.root, block.w, block.h))
-        block.fit = this.splitNode(node, block.w, block.h);
-      else
-        block.fit = this.growNode(block.w, block.h);
+        this.blocks.forEach(function(block) {
+            // find free space in the tree, or grow to accomodate
+            var open = this.root.findSpace(block.w, block.h) || this.grow(block.w, block.h);
+            // node = free space that will contain this block
+            var node = open.split(block.w, block.h);
+            node.use();
+            block.fit = node.getPosition();
+        }.bind(this));
+    },
+
+    grow: function(w, h) {
+        // only grow down if the canvas is wide enough to support the object
+        var canGrowDown = (w <= this.root.w);
+        // only grow right if the canvas is tall enough to support the object
+        var canGrowRight = (h <= this.root.h);
+
+        // if taller than we are wide, grow right
+        var shouldGrowRight = canGrowRight && (this.root.h > this.root.w);
+
+        var oldRoot = this.root;
+        this.root = oldRoot.clone();
+
+        if (shouldGrowRight || !canGrowDown) {
+            return this.root.growRight(oldRoot, w, h);
+        }
+
+        return this.root.growDown(oldRoot, w, h);
     }
-  },
+};
 
-  findNode: function(root, w, h) {
-    if (root.used)
-      return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
-    else if ((w <= root.w) && (h <= root.h))
-      return root;
-    else
-      return null;
-  },
+exports.GrowingPacker = GrowingPacker;
 
-  splitNode: function(node, w, h) {
-    node.used = true;
-    node.down  = { x: node.x,     y: node.y + h, w: node.w,     h: node.h - h };
-    node.right = { x: node.x + w, y: node.y,     w: node.w - w, h: h          };
-    return node;
-  },
-
-  growNode: function(w, h) {
-    var canGrowDown  = (w <= this.root.w);
-    var canGrowRight = (h <= this.root.h);
-
-    var shouldGrowRight = canGrowRight && (this.root.h >= (this.root.w + w)); // attempt to keep square-ish by growing right when height is much greater than width
-    var shouldGrowDown  = canGrowDown  && (this.root.w >= (this.root.h + h)); // attempt to keep square-ish by growing down  when width  is much greater than height
-
-    if (shouldGrowRight)
-      return this.growRight(w, h);
-    else if (shouldGrowDown)
-      return this.growDown(w, h);
-    else if (canGrowRight)
-     return this.growRight(w, h);
-    else if (canGrowDown)
-      return this.growDown(w, h);
-    else
-      return null; // need to ensure sensible root starting size to avoid this happening
-  },
-
-  growRight: function(w, h) {
-    this.root = {
-      used: true,
-      x: 0,
-      y: 0,
-      w: this.root.w + w,
-      h: this.root.h,
-      down: this.root,
-      right: { x: this.root.w, y: 0, w: w, h: this.root.h }
-    };
-    if (node = this.findNode(this.root, w, h))
-      return this.splitNode(node, w, h);
-    else
-      return null;
-  },
-
-  growDown: function(w, h) {
-    this.root = {
-      used: true,
-      x: 0,
-      y: 0,
-      w: this.root.w,
-      h: this.root.h + h,
-      down:  { x: 0, y: this.root.h, w: this.root.w, h: h },
-      right: this.root
-    };
-    if (node = this.findNode(this.root, w, h))
-      return this.splitNode(node, w, h);
-    else
-      return null;
-  }
-
-}
-
-
-
-
-
-function rectpack(inputRectangles) {
-
-	var rects = inputRectangles.slice(0).sort(function(a, b) { return b.height - a.height });
-	var cutoffEfficiency = 0.9;
-    var totalAreaAllImages = 0;
-    var widthWidestImage = 0;
-    var heightHeighestImage = 0;
-    for (var i = 0; i < rects.length; i++) {
-    	totalAreaAllImages += rects[i].height * rects[i].width;
-    	widthWidestImage = Math.max(widthWidestImage, rects[i].width);
-    	heightHeighestImage = Math.max(heightHeighestImage, rects[i].height);
-    }
-    
-    
-    var canvasMaxWidth = Number.MAX_VALUE;
-    var canvasMaxHeight = heightHeighestImage;
-    
-    var bestMap = null;
-    
-    // we are going to try and pack, starting with wide and short, and moving to skinny and tall, and find the best one
-    while (canvasMaxWidth >= widthWidestImage) {
-    	var map = getMap(rects, canvasMaxWidth, canvasMaxHeight)
-    	if (map) {
-    		if (bestMap == null || map.area < bestMap.area) {
-    			bestMap = map;
-    			
-	            var bestEfficiency = totalAreaAllImages / map.area;
-	            if (bestEfficiency >= cutoffEfficiency) { break; }
-	            
-    		}
-    	
-    		canvasMaxWidth = bestMap.width - 1;
-    		canvasMaxHeight++;
-    	}
-    	else {
-    		canvasMaxHeight++;
-    	}
-    	
-    	// Skip ones that don't need to be calculated
-    	var bestSpriteArea = bestMap.Area;	
-	    while (canvasMaxWidth >= widthWidestImage) {
-	    	var feasible = canvasFeasible(canvasMaxWidth, canvasMaxHeight, bestSpriteArea, totalAreaAllImages);
-	    	if (feasible.feasible) { break; }
-	    	
-	    	if (feasible.biggerThanBestSprite) { canvasMaxWidth--; }
-	    	if (feasible.smallerThanCombinedImages) { canvasMaxHeight++; }
-	    }
-    }
-    
-    return bestMap;
-}
-
-
-function canvasFeasible(canvasMaxWidth, canvasMaxHeight, bestSpriteArea, totalAreaAllImages) {
-	
-	var candidateArea = canvasMaxWidth * canvasMaxHeight;
-    var biggerThanBestSprite = (candidateArea > bestSpriteArea);
-    var smallerThanCombinedImages = (candidateArea < totalAreaAllImages);
-	
-	return {
-		feasible: !(candidateBiggerThanBestSprite || candidateSmallerThanCombinedImages),
-		biggerThanBestSprite: biggerThanBestSprite,
-		smallerThanCombinedImages: smallerThanCombinedImages
-	};
-}
-
-function getMap() {
-	return { area: 100 };
-}
+})(window);
