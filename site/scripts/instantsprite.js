@@ -32,7 +32,13 @@ var elements = sprite.elements = {
 	app: '#app',
 	noapp: '#noapp',
 	progress: '#progress',
-	intro: '#intro'
+	intro: '#intro',
+
+	despriteLink: '#despriteLink',
+	despriteModal: '#desprite-modal',
+	despriteImage: '#despriteImage',
+	despriteDrop: '#desprite-drop-area',
+	despriteForm: '#desprite-modal form'
 };
 
 var settings = sprite.settings = {
@@ -56,7 +62,7 @@ var settings = sprite.settings = {
 		return !$.browser.mozilla;
 	})(),
 	sampleImages: [
-		{ src: 'styles/icons/comments.png', extra: { nameNoExtension: 'comments', prettySize: '557.00 bytes' }, name: 'comments.png', type: 'image/png' },
+		{ src: 'styles/icons/comments.png', extra: { nameNoExtension: 'comments', prettySize: '557.00 ≈≈bytes' }, name: 'comments.png', type: 'image/png' },
 		{ src: 'styles/icons/group.png', extra: { nameNoExtension: 'group', prettySize: '753.00 bytes' }, name: 'group.png', type: 'image/png' },
 		{ src: 'styles/icons/help.png', extra: { nameNoExtension: 'help', prettySize: '786.00 bytes' }, name: 'help.png', type: 'image/png' },
 		{ src: 'styles/icons/delete.png', extra: { nameNoExtension: 'delete', prettySize: '715.00 bytes' }, name: 'delete.png', type: 'image/png' },
@@ -468,6 +474,7 @@ sprite.init = function() {
 		}
 	});
 
+	/** Initialize the 'copy to clipboard' button */
 	var clip = new ZeroClipboard(elements.exportBase64[0]);
 
 	clip.on('mouseover', function(c) {
@@ -492,6 +499,7 @@ sprite.init = function() {
 		elements.exportBase64.trigger('destroy');
 	});
 
+	/** Initialize 'new window' button */
 	elements.exportImageNewWindow.click(function() {
 		if (!$(this).hasClass("disabled")) {
 			window.open(resultBase64);
@@ -503,6 +511,41 @@ sprite.init = function() {
 		for (var i = 0; i < settings.sampleImages.length; i++) {
 			sprite.loadimage(settings.sampleImages[i].src, settings.sampleImages[i]);
 		}
+		return false;
+	});
+
+	/** Initialize the 'import existing css sprite' button */
+	elements.despriteLink.click(function() {
+		elements.despriteModal.modal();
+		return false;
+	});
+
+	elements.despriteForm.submit(function() {
+		var form = $(this);
+		var css = form.find('[name=css]').val();
+
+		var image = elements.despriteImage[0];
+
+		var sprites = window.Desprite(image, css);
+		sprites = _.map(sprites, function(s) {
+			return { 
+				src: s.src, 
+				extra: {
+					nameNoExtension: s.name, 
+					// bytes = ~ 75% of base64 url length
+					prettySize: parseFloat(s.src.length * .75).toFixed(2) + ' ≈≈bytes'
+				},
+				name: s.name,
+				type: 'image/png'
+			}
+		})
+
+		_.each(sprites, function(s) {
+			sprite.loadimage(s.src, s);
+		});
+
+		$.modal.close();
+
 		return false;
 	});
 
@@ -534,6 +577,8 @@ function fitDropboxToScreen() {
 		elements.dropbox.height(height);
 	}
 }
+
+
 
 
 

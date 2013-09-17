@@ -13,9 +13,10 @@
 	<script class='dev' src='scripts/jquery.tmpl.min.js'></script>
 	<script class='dev' src='scripts/jquery-ui-1.8.5.custom.min.js'></script>
     <script class='dev' src='scripts/jquery.tinytooltip.js'></script>
+    <script class='dev' src='scripts/simplemodal.js'></script>
     <script class='dev' src='scripts/ZeroClipboard.js'></script>
-
     <script class='dev' src='scripts/rectangle-packer.js'></script>
+    <script class='dev' src='scripts/despriter.js'></script>
 	<script class='dev' src='scripts/instantsprite.js'></script>
 
 	<!--livescript-->
@@ -43,7 +44,16 @@
 <section id='source' class='full clearfix'>
 	<div id='initialload'>Loading, please wait...<span></span></div>
 	<ul class='hide'>
-	<li><input type="file" id="fileInput" class='offscreen' multiple accept="image/*" /><a id="fileInputShortcut" class='icon computer_add' href="#">Select multiple image files</a> from your computer</li>
+	<li>
+        <input type="file" id="fileInput" class='offscreen' multiple accept="image/*" /><a id="fileInputShortcut" class='icon computer_add' href="#">
+            Select multiple image files
+        </a> from your computer
+    </li>
+    <li>
+        <a id="despriteLink" href="#">
+            Import an existing CSS Sprite
+        </a>
+    </li>
 	<li>Drag and drop files from your desktop onto the page</li>
 	<li><a href='#' id='fileSamples'>Use a few sample images</a> to try it out</li>
 	</ul>
@@ -134,6 +144,46 @@
 	</p>
 	</section>
 </div>
+
+<div id="desprite-modal" style="display: none;">
+    <form>
+        <div class="left">
+            <div id="desprite-drop-area">Drop your Image Here</div>
+        </div>
+
+  <img id="despriteImage" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA2AAAAASCAMAAAAKTk3BAAABUFBMVEUAAAAAAAAzMzMpKSk6OjoYGBgAAAAQEBBCQkJKSkoAAAAAAAAAAAAhISEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBApKSkhISEICAgYGBgzMzMICAg6OjopKSkICAgQEBAhISEzMzMICAhCQkL///9mZmY6Ojr29vYQEBApKSlbW1tbW1tCQkJTU1Pg4OBTU1OsrKwYGBiEhIRmZmYhISGEhIRTU1NqampqamoYGBjl5eX////v7+/W1tYQEBBCQkJ7e3t7e3tzc3PCwsIQEBCZmZmEhIR7e3vg4OBmZmb29vZzc3MhISFKSkpKSkpbW1tTU1N7e3shISFzc3OZmZnW1tasrKwzMzOsrKwYGBiZmZnl5eVTU1Nzc3OZmZlzc3ONjY26urpzc3MYGBi4uLhbW1tTU1M6OjqoqKgAAAD////v7+/W1tbg4OB/iM3mAAAAa3RSTlMAIiIiIiIRIiIiM0RVImbuzLvdd5mqiDMzMzMzMxEzESIRERFEMxEiERFEdzMiEREiMyJEMxFEuyIRIhEi7hEiVZkzIjPMd7uZu92q3btmiBG7mZl3IpnMzHeqiKrdqqoimTMiEXcizMx3Ir2LYNAAAAWkSURBVHhe7Zpnc9tGFEXfAuCS3F2hECDAItuyLffee+IUO7333uulnf/fw0UQWyLBfRqCo8woPMPRpztXIICzeFySDjhr1qxZs0aKXUiqQexmcZecaWAyB541a7ZmOERzHJrNUC2HHBVM5j9jjdBaEosgHsGFpKCDjlMepVS9HVuzcE22g8/sEwYw1BhBFubRG8bEYlOS9pHc5Y+mEDBSkxuFmFgAxQVWZZghFsWfZZlq4mFquIXjaPtf1Lk3z6mt9lGaoz3LgqKtUclW25bUZornHUWbGiJBeyEFwhVYmli/AOkyB4j2JDw4w5SiVdEHtOPcxDmQRu4lSJocrGEqBKBdLQByI2kFaCjiABJiiAHdfNmQMYCQF2xknk4mX6qlBZsqU4y01koVxSLDip0lhc00waBHPBSuQDABoF/+dUmdALxhGgAE66Da0zRmiEO5/ptAhVP5EBb3yZYRLK7DhoWbJnoglC8m1eOXVbAW9sALFoEJCZRktIB7rSnt6Ut/MJmi2vdojtYstT1FsW0+evvBp3q7aNdGqDXeWTKuzRCeQW4QhcDqBONXqYS9P2LeMAMAms24DTNVRYxIkhv3IStUCKft/ZAzA4jCBM7DSQHYjHL2sIJJoTIAuXKO6xIxxSCGUPF+cRc9BpRIAeEQbKTUWP1i/fpi1FpSsI1WcdY8sh3f6NHYRuoyuxg3EgxAL4/IDXbAh3ruSatSgzMMsrlfjGFVSQKg79BdEfVds51M+kAkFIBkcQ+gSTFe5OgRcWOkBgSFiKgRGSqQOy9XnzJuYZW5YQIRSpA6TIaymi08mmMbG6PwwXcmfDp145ZubRyrEWOWuppWod+blPygxhsbR2oyw90tQ5tZFlhCWqlgIGb+Az9RuD0V4Es0KpT7JtN9d6gHKOX0XVSrcwhHTABEMlbM21ZEaUJuTF8SAbLRE4wSlKDvnttinQCy0YgoI15mCYhK6HqO+a2HTyaT336fmvHEjDeWFOyiPxzr1yYln+lpzfGazKxgx5e+3SUsCe2fYIK9qBbNDBSyZwXk58Mwd5uY86OdrBIho3vGPHdFNfQiWsX+ICdYxAtWGZYw6vAhipglWqoUJXBsOpVnUC5W9YgvXp9UnBv5vl/zWPFnoTkuWcFuTUoe6bHvv09zXBjsbhlccjoRcXNCQnsiBAw1RfBXjPfLwhpWTSSZ+wxknF+lYZzNUthEZIskI0/qbMqQ0N7QALPjLSTzjVoIi2GuQ1wuZooVzInib0UDRLHjUhzxhmc/n5S8ofylBbvjD4bbX01K/tge+v4NmuPnWcHu0JIgTKxfqxaMG+0yAHEzv6xh7r0AVU38fbc+eeUXZ5hkEvxqFgKpzgDlLooV8YiM3SypXuzH4YwbXAwszQTTgJYxwPq+2LDjnjfU71gv/jIDb0rN3ObNQvN0/eE185LteUtfG3gdquHE7pYTtOwTDDCx9WvfvgeTz3YVMmaLg3e5x5ghqgotyUUOCP6oU/ZDfA+IgZjdVjDsUk88CZBSU8EAIw2wl3WDm0dhWMEUJcxbE2mmJQCxSDBvoK0Z7xZBA8Fe8QdTwx5/+O1jM/XLv0t1mcHOEv+TpbccgGiff8khe2VHkjEaGuKJENIK0II4REIMiQoBrd05kfdTycmc5sRjMkGNUaVEmhojYu6YZRhKUqkinkWyng6meOrjydcqKDlNcwSz0DxnLnibw5sPjTl7c7DpdV+guswV73mHd+UMLYtcIr4viKap/UfHsaJGrHEZf7pjCYrtYrNTcpHm6MxCNVzuepsDy+ZhL3iRarl/IuhUBJ3LdOBZs+ZG4AUW3wv+oUawrhfsxAuo1rALnhccPhwE3m3rV33mvFcqFnjn79P/gDVrvn91Fz/WDHc/XX95J9d/pVpOXr17u9vtnvrzJFkWZE51O53uqauOzGr4G8P1yORwgYRwAAAAAElFTkSuQmCC">
+  <br />
+
+        <textarea placeholder="Paste CSS Here" name="css">.ui-icon { height: 18px; width: 18px; }    
+.ui-icon-plus { background-position:-1px -1px; }
+.ui-icon-minus { background-position:-37px -1px; }
+.ui-icon-delete { background-position:-73px -1px; }
+.ui-icon-arrow-r { background-position:-108px -1px; }
+.ui-icon-arrow-l { background-position:-144px -1px; }
+.ui-icon-arrow-u { background-position:-180px -1px; }
+.ui-icon-arrow-d { background-position:-216px -1px; }
+.ui-icon-check { background-position:-252px -1px; }
+.ui-icon-gear { background-position:-288px -1px; }
+.ui-icon-refresh { background-position:-323px -1px; }
+.ui-icon-forward { background-position:-360px -1px; }
+.ui-icon-back { background-position:-396px -1px; }
+.ui-icon-grid { background-position:-432px -1px; }
+.ui-icon-star { background-position:-467px -1px; }
+.ui-icon-alert { background-position:-503px -1px; }
+.ui-icon-info { background-position:-539px -1px; }
+.ui-icon-home { background-position:-575px -1px; }
+.ui-icon-search { background-position:-611px -1px; }
+.ui-icon-checkbox-on { background-position:-647px -1px; }
+.ui-icon-checkbox-off { background-position:-683px -1px; }
+.ui-icon-radio-on { background-position:-718px -1px; }
+.ui-icon-radio-off { background-position:-754px -1px; }
+.ui-icon-bars { background-position:-788px -1px; }
+.ui-icon-edit { background-position:-824px -1px; }</textarea>
+
+        <button type="Submit">Load Sprite</button>
+    </form>
+</div>
+
 
 <noscript>
 	<section>

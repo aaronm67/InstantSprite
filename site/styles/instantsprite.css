@@ -135,3 +135,27 @@ form { margin: 0; padding: 0; }
 .tinytooltip { display: block; position: absolute; z-index: 1; }
 .tinytooltip .arrow { background: url('../images/tinytooltip.png') no-repeat center center; height: 10px; display: block; z-index: 3; position: relative; margin-bottom: -1px; }
 .tinytooltip .message { background: #f3eabc; padding: 8px; border: 1px solid #dbd3ab; border-radius: 3px; top: 5px; font-size: 11px; line-height: 11px; text-align: center; z-index: 2; position: relative; }
+
+/*
+ * SimpleModal Basic Modal Dialog
+ * http://simplemodal.com
+ *
+ * Copyright (c) 2013 Eric Martin - http://ericmmartin.com
+ *
+ * Licensed under the MIT license:
+ *   http://www.opensource.org/licenses/mit-license.php
+ */
+
+#basic-modal-content {display:none;}
+
+/* Overlay */
+#simplemodal-overlay {background-color:#000;}
+
+/* Container */
+#simplemodal-container {height:360px; width:600px; color:#bbb; background-color:#333; border:4px solid #444; padding:12px;}
+#simplemodal-container .simplemodal-data {padding:8px;}
+#simplemodal-container code {background:#141414; border-left:3px solid #65B43D; color:#bbb; display:block; font-size:12px; margin-bottom:12px; padding:4px 6px 6px;}
+#simplemodal-container a {color:#ddd;}
+#simplemodal-container a.modalCloseImg {background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAdCAYAAABfeMd1AAAEAUlEQVRIDY1VTUiUQRhe1zLMzP7URPInNKmDZkEIayi0Swt2EEQCQVDpFoQEEiTiJQoKT4EgSNrBm0gHqS7iQQ0yzDoEeimT3Ur6WW1ba/2bnudz32m+/XbNB56dd2be933mnZlvNsW1S+QDZwG2X4E3wAdgl+HJ3ZjwDvAeUAkQAB4CZ4DkWXaYaQC+AQlyO4bWgTZgh3TOqUdAfCYsWo2Ojqq+vj41MjKiEhX3EjgHODPGjTwFTIG5uTlVU1Oj4OYgjkghr+mu3gJxKe3dG4AZ0dPTo9LT0x3JTUG32606OztVNBrVoXcBe+ZYrwDQXjA6Ojp2TG4K0W5qajLD1QXAIXQPEK+xsTGHQH19vW2sqKhIzc7OKnN8aGhIUqgXgEPkIyAe1dXVtoT4HKyp2tpaa5xnEQqFrLGBgQHtW1JSojY2NiSNSgW0EHaqUGaoxfJNdnd3W9MUo1AiAfGfmJiQVAqLvahF6urqrsgMr6kESMutkcTiZ1Ygfmz7+/vFReHTuYYxl5s/2dnZOWwJvBjbhvG7sLDgGhwc1CPst7a26r5pmPE5AOcokrKysvJTHLOyssTULc7A1dLSovuozNbXEzBw5XU3Eon8QSeFAyk4k1KpMf5MzEOWC0Bfbh/nEG+jeSYej+eSFoGRgeQBETKDx8fHrWFJ2t7eLm6KtimCbY+/XdwW60j4k4nH9LFE822SYN4sCsj15TiTm33x7e3tlRRqamrqNcYPgtY1tkTwWl/WHjCam5u1EG+XJErW+nw+WxVer5c3g5X8E0HnZFdXl359+RbxqUiW1Bz3+/0qHA7rNaKKd5gvBW0iGRgoAD0zMzP6y2cUn4ri4uKEYjwDbpH5lQeDweXy8vI25CoCM0E3rxe5DzwE5lVWVvrwTdyEYy76GhB3kWtra660tDRXWVmZC38Bep7G4uJiuLGx8cH09PRzdIPgMvgbtETS0B4BT4Fe8Dr+dV/p+ndh4D38UlFRcR+xfvA0eAzk4lmEBR7OATAfPA82gLeqqqqeoKrA6urqZjKd4eHhJRzyM/jfBq+CfOJPgNyqPaBW4Q3bC+4HD4N5IB0LY20u/lULwKPYqlRs2eb8/PzK5OQkz+8LfALgYoyf0P4AI+A6uCWlsKUQt42XgEJ8dyh2PGZzjItg1VvgKsg952NHoc/gEhgCf4Fr4CaorHJogAykMoMJ9qMg3zUm4ofFh4kiDOa7FAaZlCsn6SsVWALob+8ZDYBCnOAKCNoU4aq+g6yCB8mKuQD6cUFMSh+2FOZCtQBsfSa0BbJ1rJLnxMTcRpJ9znNBGyCFuBC2JJPbBNBPKCLjIsaVc4tI2iLCaiQpbZLipA0M+B/Eh63YjDETOhKbSf8Cww7pw90oo9kAAAAASUVORK5CYII=) no-repeat;
+ width:25px; height:29px; display:inline; z-index:3200; position:absolute; top:-15px; right:-16px; cursor:pointer;}
+#simplemodal-container h3 {color:#84b8d9;}
